@@ -2,8 +2,11 @@
 // This uses ES modules from a CDN so you don't need any bundler.
 
 // You can bump this version later if needed.
-import * as THREE from 'https://unpkg.com/three@0.161.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js';
+// main.js
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ... rest of your code remains exactly the same ...
 
 // ---------------------------
 // 1. Basic setup

@@ -4,8 +4,15 @@
   <meta charset="UTF-8" />
   <title>CS559 Final Project Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+    }
+  }
+</script>
   <style>
-    /* Remove default margins so the canvas fills the window */
     html, body {
       margin: 0;
       padding: 0;
@@ -28,7 +35,6 @@
       z-index: 10;
     }
 
-    /* Single canvas required by the assignment */
     canvas#three-canvas {
       display: block;
       width: 100%;
@@ -37,16 +43,14 @@
   </style>
 </head>
 <body>
-  <!-- You can later show group ID / mode switch here -->
   <div id="overlay">
     CS559 Final Project Prototype<br />
     <span id="status">Loading Three.js scene…</span>
   </div>
 
-  <!-- Single canvas for the whole project -->
   <canvas id="three-canvas"></canvas>
 
-  <!-- Main JS file -->
+  <!-- Link to main.js as a module -->
   <script type="module" src="./main.js"></script>
 </body>
 </html>

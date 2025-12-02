@@ -49,7 +49,6 @@ scene.add(directionalLight);
 
 // ---------------------------
 // 3. Simple prototype geometry
-//    (You can later replace/extend with your game objects)
 // ---------------------------
 
 // Ground plane
@@ -72,7 +71,7 @@ const playerCube = new THREE.Mesh(cubeGeom, cubeMat);
 playerCube.position.y = -0.5;
 scene.add(playerCube);
 
-// A few extra primitive shapes to prove rendering works
+// Extra primitive shapes
 const sphereGeom = new THREE.SphereGeometry(0.5, 32, 16);
 const sphereMat = new THREE.MeshStandardMaterial({ color: 0xf54291 });
 const sphere = new THREE.Mesh(sphereGeom, sphereMat);
@@ -86,7 +85,7 @@ cone.position.set(2, -0.5, -1.5);
 scene.add(cone);
 
 // ---------------------------
-// 4. Basic keyboard controls (for future game mechanics)
+// 4. Basic keyboard controls
 // ---------------------------
 
 const keysPressed = {
@@ -112,7 +111,6 @@ window.addEventListener('keyup', (event) => {
   }
 });
 
-// Simple movement speed for the cube (prototype)
 const moveSpeed = 2.0; // units per second
 
 function updatePlayer(deltaTime) {
@@ -124,7 +122,6 @@ function updatePlayer(deltaTime) {
   if (keysPressed.ArrowLeft || keysPressed.a) dx -= 1;
   if (keysPressed.ArrowRight || keysPressed.d) dx += 1;
 
-  // Normalize diagonal movement
   if (dx !== 0 || dz !== 0) {
     const len = Math.hypot(dx, dz);
     dx /= len;
@@ -147,7 +144,6 @@ function animate(now) {
   const dt = (now - lastTime) / 1000; // seconds
   lastTime = now;
 
-  // Example idle animation (for “other objects” later)
   sphere.position.y = -0.3 + Math.sin(now * 0.001) * 0.3;
   cone.rotation.y += dt * 1.0;
 

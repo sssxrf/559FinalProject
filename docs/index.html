@@ -2,55 +2,46 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CS559 Final Project Prototype</title>
+  <title>CS559 Final Project: Marionette</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
   <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+      }
     }
-  }
-</script>
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      height: 100%;
-      width: 100%;
-      background: #111;
-      color: white;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
+    body { margin: 0; overflow: hidden; background: #111; color: white; font-family: sans-serif; }
     #overlay {
-      position: fixed;
-      top: 8px;
-      left: 8px;
-      padding: 6px 10px;
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 4px;
-      font-size: 13px;
-      z-index: 10;
+      position: fixed; top: 10px; left: 10px; z-index: 10;
+      background: rgba(0,0,0,0.6); padding: 10px; border-radius: 4px;
     }
-
-    canvas#three-canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
+    /* Hide the raw video, we only want the data */
+    .input_video { display: none; }
+    canvas { display: block; }
   </style>
 </head>
 <body>
+
   <div id="overlay">
-    CS559 Final Project Prototype<br />
-    <span id="status">Loading Three.js scene…</span>
+    <div><strong>Group 1234: The Marionette</strong></div>
+    <div id="status">Loading AI...</div>
+    <div id="instruction" style="color: yellow; margin-top:5px;">Allow Camera Access to Begin</div>
   </div>
+
+  <video class="input_video"></video>
 
   <canvas id="three-canvas"></canvas>
 
-  <!-- Link to main.js as a module -->
   <script type="module" src="./main.js"></script>
 </body>
 </html>

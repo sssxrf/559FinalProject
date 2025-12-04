@@ -22,7 +22,7 @@ Full Mode: A polished "Robot" theme with glowing environments, physics-based deb
 
 ### How to Play
 
-Feel free to watch the demo video by clicking on the 
+Feel free to watch the demo video by clicking on the 'demo' button on the bottom left corner.
 
 Allow Camera Access: The game runs locally in your browser.
 

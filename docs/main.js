@@ -32,7 +32,7 @@ modeContainer.appendChild(modeLabel);
 const modeSelect = document.createElement('select');
 modeSelect.innerHTML = `
     <option value="PROTOTYPE">Prototype</option>
-    <option value="FULL">Full Version</option>
+    <option value="FULL">Full Version (Cartoon)</option>
 `;
 modeSelect.addEventListener('change', (e) => setGameMode(e.target.value));
 modeContainer.appendChild(modeSelect);
@@ -70,14 +70,14 @@ dirLight.position.set(5, 10, 7);
 scene.add(dirLight);
 
 // --------------------------------------------------------
-// 2. GAME STATE & ASSET MANAGEMENT
+// 2. GAME STATE & ASSETS
 // --------------------------------------------------------
-let gameMode = "PROTOTYPE"; // "PROTOTYPE" or "FULL"
+let gameMode = "PROTOTYPE"; 
 let gameState = "CALIB_OPEN"; 
 let handLandmarks = null;
 let score = 0;
 
-// Factory for Materials/Geometries
+// Asset Factory
 const Assets = {
     prototype: {
         limbGeo: new THREE.BoxGeometry(0.3, 1.5, 0.3),
@@ -87,102 +87,152 @@ const Assets = {
         wallMat: new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.4 })
     },
     full: {
-        // Placeholder for Full Version assets
-        // TODO: Load GLTF models here in the future
-        limbGeo: new THREE.CylinderGeometry(0.15, 0.1, 1.5, 8), // Smoother shape
-        armMat: new THREE.MeshPhysicalMaterial({ color: 0xffaa00, metalness: 0.7, roughness: 0.2 }), // Gold
-        legMat: new THREE.MeshPhysicalMaterial({ color: 0x00aaff, metalness: 0.7, roughness: 0.2 }), // Chrome Blue
-        bodyMat: new THREE.MeshPhysicalMaterial({ color: 0x888888, metalness: 0.5, roughness: 0.5 }),
-        wallMat: new THREE.MeshStandardMaterial({ color: 0x5500aa, roughness: 0.1 }) // Shiny Purple walls
+        // Updated "Cartoon Robot" Materials
+        robotSkin: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }), // White Glossy
+        robotJoint: new THREE.MeshStandardMaterial({ color: 0x333333 }), // Dark Grey
+        robotEye: new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 0.8 }), // Glowing Cyan
+        
+        // Updated Wall Material: Emissive makes it glow in the dark!
+        wallMat: new THREE.MeshStandardMaterial({ 
+            color: 0xff00ff, 
+            roughness: 0.2,
+            emissive: 0x440044, // Glows purple
+            emissiveIntensity: 0.5
+        })
     }
 };
 
 function getAsset(type, isLeg) {
-    const modeAssets = Assets[gameMode.toLowerCase()];
-    if (type === 'limbGeo') return modeAssets.limbGeo;
-    if (type === 'limbMat') return isLeg ? modeAssets.legMat : modeAssets.armMat;
-    if (type === 'bodyMat') return modeAssets.bodyMat;
-    if (type === 'wallMat') return modeAssets.wallMat;
+    if (gameMode === "PROTOTYPE") {
+        const a = Assets.prototype;
+        if (type === 'limbGeo') return a.limbGeo;
+        if (type === 'limbMat') return isLeg ? a.legMat : a.armMat;
+        if (type === 'bodyMat') return a.bodyMat;
+        if (type === 'wallMat') return a.wallMat;
+    } else {
+        const a = Assets.full;
+        if (type === 'wallMat') return a.wallMat;
+        // Other parts are custom built in updatePuppetSkin
+        return null; 
+    }
 }
 
 // --------------------------------------------------------
-// 3. BUILD THE MARIONETTE (EXTENSIBLE)
+// 3. BUILD THE MARIONETTE (PROTOTYPE vs CARTOON)
 // --------------------------------------------------------
 const puppet = new THREE.Group();
 puppet.position.y = -2;
 scene.add(puppet);
 
-// Body Groups (Containers)
-const torsoGroup = new THREE.Group();
-puppet.add(torsoGroup);
-const headGroup = new THREE.Group();
-puppet.add(headGroup);
+// Containers
+const torsoGroup = new THREE.Group(); puppet.add(torsoGroup);
+const headGroup = new THREE.Group(); puppet.add(headGroup);
+const leftArmGroup = new THREE.Group(); puppet.add(leftArmGroup);
+const rightArmGroup = new THREE.Group(); puppet.add(rightArmGroup);
+const leftLegGroup = new THREE.Group(); puppet.add(leftLegGroup);
+const rightLegGroup = new THREE.Group(); puppet.add(rightLegGroup);
 
-// Limb Groups (Containers for rotation)
-const leftArmGroup = new THREE.Group();
-const rightArmGroup = new THREE.Group();
-const leftLegGroup = new THREE.Group();
-const rightLegGroup = new THREE.Group();
-
-// Configure Pivot Points
+// Pivot Points (Shoulders/Hips)
 leftArmGroup.position.set(-0.7, 1.8, 0);
 rightArmGroup.position.set(0.7, 1.8, 0);
 leftLegGroup.position.set(-0.3, 0, 0);
 rightLegGroup.position.set(0.3, 0, 0);
 
-puppet.add(leftArmGroup);
-puppet.add(rightArmGroup);
-puppet.add(leftLegGroup);
-puppet.add(rightLegGroup);
-
 // Global list for collision detection
-// We will update this whenever we switch modes
 let collisionMeshes = []; 
 
-// This function rebuilds the visual meshes inside the groups
 function updatePuppetSkin() {
-    // 1. Clear existing meshes
+    // 1. Clean up
     [torsoGroup, headGroup, leftArmGroup, rightArmGroup, leftLegGroup, rightLegGroup].forEach(g => {
         while(g.children.length > 0) g.remove(g.children[0]);
     });
     collisionMeshes = [];
 
-    // 2. Create Body
-    const torsoMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 16), getAsset('bodyMat'));
-    torsoMesh.position.y = 1;
-    torsoGroup.add(torsoMesh);
+    if (gameMode === "PROTOTYPE") {
+        // --- PROTOTYPE BUILD ---
+        const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 16), getAsset('bodyMat'));
+        torso.position.y = 1; torsoGroup.add(torso);
 
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.6), getAsset('bodyMat'));
-    headMesh.position.y = 2.4;
-    headGroup.add(headMesh);
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.6), getAsset('bodyMat'));
+        head.position.y = 2.4; headGroup.add(head);
 
-    // 3. Create Limbs
-    // Helper to add mesh to group
-    const addLimbMesh = (group, isLeg) => {
-        if (gameMode === "FULL") {
-            // --- FULL MODE EXTENSION POINT ---
-            // Example: const gltfMesh = loadedGLTF.scene.clone();
-            // group.add(gltfMesh);
-            // collisionMeshes.push(gltfMesh);
+        const addLimb = (group, isLeg) => {
+            const mesh = new THREE.Mesh(getAsset('limbGeo'), getAsset('limbMat', isLeg));
+            mesh.position.y = -0.75; group.add(mesh); collisionMeshes.push(mesh);
+        };
+        addLimb(leftArmGroup, false); addLimb(rightArmGroup, false);
+        addLimb(leftLegGroup, true); addLimb(rightLegGroup, true);
+    } 
+    else {
+        // --- FULL (CARTOON ROBOT) BUILD ---
+        const matSkin = Assets.full.robotSkin;
+        const matJoint = Assets.full.robotJoint;
+        const matEye = Assets.full.robotEye;
+
+        // 1. Robot Head (Oval + Eyes + Antenna)
+        const headGeo = new THREE.CapsuleGeometry(0.5, 0.4, 4, 8); // Slightly oval head
+        const headMesh = new THREE.Mesh(headGeo, matSkin);
+        headMesh.position.y = 2.4;
+        
+        // Eyes
+        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.12), matEye);
+        leftEye.position.set(-0.2, 0.1, 0.45);
+        const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.12), matEye);
+        rightEye.position.set(0.2, 0.1, 0.45);
+        headMesh.add(leftEye); headMesh.add(rightEye);
+        
+        // Antenna
+        const antStick = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5), matJoint);
+        antStick.position.y = 0.6;
+        const antBall = new THREE.Mesh(new THREE.SphereGeometry(0.08), matEye);
+        antBall.position.y = 0.25;
+        antStick.add(antBall);
+        headMesh.add(antStick);
+        
+        headGroup.add(headMesh);
+
+        // 2. Robot Torso (Rounded Box)
+        const bodyGeo = new THREE.CylinderGeometry(0.5, 0.6, 1.8, 12);
+        const bodyMesh = new THREE.Mesh(bodyGeo, matSkin);
+        bodyMesh.position.y = 1.0;
+        // Add a "chest plate" details
+        const plate = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.2), matJoint);
+        plate.position.set(0, 0.2, 0.45);
+        bodyMesh.add(plate);
+        torsoGroup.add(bodyMesh);
+
+        // 3. Robot Limbs (Jointed look)
+        const addRobotLimb = (group) => {
+            // Visuals
+            const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 1.5, 8), matSkin);
+            upper.position.y = -0.75;
             
-            // For now, use the shiny cylinder
-            const mesh = new THREE.Mesh(getAsset('limbGeo'), getAsset('limbMat', isLeg));
-            mesh.position.y = -0.75; // Offset logic remains the same
-            group.add(mesh);
-            collisionMeshes.push(mesh);
-        } else {
-            // PROTOTYPE MODE
-            const mesh = new THREE.Mesh(getAsset('limbGeo'), getAsset('limbMat', isLeg));
-            mesh.position.y = -0.75; 
-            group.add(mesh);
-            collisionMeshes.push(mesh);
-        }
-    };
+            // Shoulder Joint (Sphere)
+            const joint = new THREE.Mesh(new THREE.SphereGeometry(0.2), matJoint);
+            joint.position.y = 0.75; // Top of the cylinder
+            upper.add(joint);
 
-    addLimbMesh(leftArmGroup, false);
-    addLimbMesh(rightArmGroup, false);
-    addLimbMesh(leftLegGroup, true);
-    addLimbMesh(rightLegGroup, true);
+            // Hand/Foot (Sphere)
+            const hand = new THREE.Mesh(new THREE.SphereGeometry(0.2), matJoint);
+            hand.position.y = -0.75; // Bottom of the cylinder
+            upper.add(hand);
+
+            group.add(upper);
+
+            // Hitbox (Invisible - Matches Prototype Geometry exactly)
+            // This ensures collision is identical to Prototype mode
+            const hitbox = new THREE.Mesh(Assets.prototype.limbGeo, new THREE.MeshBasicMaterial({ visible: false }));
+            hitbox.position.y = -0.75;
+            group.add(hitbox);
+            
+            collisionMeshes.push(hitbox);
+        };
+
+        addRobotLimb(leftArmGroup);
+        addRobotLimb(rightArmGroup);
+        addRobotLimb(leftLegGroup);
+        addRobotLimb(rightLegGroup);
+    }
 }
 
 // Initial Build
@@ -190,9 +240,7 @@ updatePuppetSkin();
 
 function setGameMode(mode) {
     gameMode = mode;
-    console.log("Switched to:", gameMode);
     updatePuppetSkin();
-    // Note: Walls will update automatically as new ones spawn
 }
 
 // --------------------------------------------------------
@@ -218,7 +266,7 @@ function createString() {
 const strings = { index: createString(), middle: createString(), ring: createString(), pinky: createString() };
 
 // --------------------------------------------------------
-// 5. WALL MANAGER
+// 5. WALL MANAGER (UPDATED VISIBILITY)
 // --------------------------------------------------------
 const walls = []; 
 const wallSpeed = 10.0;
@@ -259,8 +307,9 @@ function spawnWall() {
     const type = Math.random() > 0.5 ? "ARMS_UP" : "SPLITS";
 
     const boxGeo = new THREE.BoxGeometry(blockSize, blockSize, 1);
-    // Use the Factory to get wall material based on current Mode
-    const boxMat = getAsset('wallMat'); 
+    
+    // FIX: Clone the material so each wall has a unique color instance
+    const boxMat = getAsset('wallMat').clone(); 
 
     for(let r = 0; r < rows; r++) {
         for(let c = 0; c < cols; c++) {
@@ -323,7 +372,7 @@ function checkCollision(wallGroup) {
 }
 
 function handleCrash(wallGroup) {
-    wallGroup.children.forEach(brick => brick.material.color.setHex(0x550000));
+    wallGroup.children.forEach(brick => brick.material.color.setHex(0xff0000));
     statusEl.textContent = "CRASH! -1 Point";
     setTimeout(() => { if(gameState==="PLAYING") statusEl.textContent = "GAME ON! Dodge the walls!"; }, 1000);
 }
@@ -334,7 +383,7 @@ function updateScore() {
 }
 
 // --------------------------------------------------------
-// 6. INPUT HANDLING & GAME LOOP
+// 6. INPUT HANDLING & LOOP
 // --------------------------------------------------------
 const videoElement = document.getElementsByClassName('input_video')[0];
 
@@ -393,7 +442,7 @@ function updateGameLogic() {
         leftLegGroup.rotation.z = -safeMapRange(currentVals[2], calibData.open[2], calibData.closed[2], 0.0, 0.8);
         rightLegGroup.rotation.z = safeMapRange(currentVals[3], calibData.open[3], calibData.closed[3], 0.0, 0.8);
 
-        // String Updates: Find the mesh inside the group (it's the first child)
+        // Update strings to first child (the mesh)
         updateString(strings.index, jointMeshes[8], leftArmGroup.children[0]);
         updateString(strings.middle, jointMeshes[12], rightArmGroup.children[0]);
         updateString(strings.ring, jointMeshes[16], leftLegGroup.children[0]);
@@ -404,6 +453,7 @@ function updateGameLogic() {
 function updateString(lineObj, fingerMesh, limbMesh) {
     if (!limbMesh) return;
     const start = fingerMesh.position;
+    // For Robot, the "hand" ball is at Y=-0.75 relative to the limb mesh
     const end = new THREE.Vector3(0, -0.75, 0); 
     end.applyMatrix4(limbMesh.matrixWorld);
     lineObj.geometry.setFromPoints([start, end]);

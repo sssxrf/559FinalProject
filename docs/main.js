@@ -17,8 +17,9 @@ document.body.appendChild(scoreEl);
 
 // --- UI: Mode Switcher ---
 const modeContainer = document.createElement('div');
+// CHANGED: Moved from top:10px to bottom:10px to avoid overlapping with Group Name
 Object.assign(modeContainer.style, {
-    position: 'fixed', top: '10px', left: '10px', zIndex: '20',
+    position: 'fixed', bottom: '10px', left: '10px', zIndex: '20',
     background: 'rgba(0,0,0,0.5)', padding: '5px', borderRadius: '4px'
 });
 document.body.appendChild(modeContainer);

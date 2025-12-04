@@ -275,11 +275,25 @@ function safeMapRange(value, inMin, inMax, outMin, outMax) {
 
 function isHole(x, y, type) {
     if (Math.abs(x) < 0.9 && y > -1.5 && y < 3.2) return true;
+    
     if (type === "ARMS_UP") {
         if (x < -0.7 && x > -3.0 && y > 1 && y < 3.5) return true;
         if (x > 0.7 && x < 3.0 && y > 1 && y < 3.5) return true;
         if (y <0 && y > -2 && x > -0.7 && x < 0.7) return true;
     }
+
+    if (type === "LEFT_ARM_UP") {
+        if (x < -0.7 && x > -3.0 && y > 1 && y < 3.5) return true;
+        if (x > 0.7 && x < 1.5 && y > -1 && y < 3.5) return true;
+        if (y <0 && y > -2 && x > -0.7 && x < 0.7) return true;
+    }
+
+    if (type === "RIGHT_ARM_UP") {
+        if (x < -0.7 && x > -1.5 && y > -1 && y < 3.5) return true;
+         if (x > 0.7 && x < 3.0 && y > 1 && y < 3.5) return true;
+        if (y <0 && y > -2 && x > -0.7 && x < 0.7) return true;
+    }
+
     if (type === "SPLITS") {
         if (y < 2) {
             if (x < -0.2 && x > -2.5) return true;
@@ -295,7 +309,10 @@ function spawnWall() {
     const wallWidth = 10; const wallHeight = 7; 
     const cols = Math.floor(wallWidth / blockSize);
     const rows = Math.floor(wallHeight / blockSize);
-    const type = Math.random() > 0.5 ? "ARMS_UP" : "SPLITS";
+    
+    // UPDATED: Added new wall types to the spawning pool
+    const candidates = ["ARMS_UP", "SPLITS", "LEFT_ARM_UP", "RIGHT_ARM_UP"];
+    const type = candidates[Math.floor(Math.random() * candidates.length)];
 
     const boxGeo = new THREE.BoxGeometry(blockSize, blockSize, 1);
     const boxMat = getAsset('wallMat').clone(); 

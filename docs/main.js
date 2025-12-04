@@ -254,7 +254,7 @@ function safeMapRange(value, inMin, inMax, outMin, outMax) {
 }
 
 function isHole(x, y, type) {
-    if (Math.abs(x) < 0.9 && y > -1.3 && y < 3.2) return true;
+    if (Math.abs(x) < 0.9 && y > -1.5 && y < 3.2) return true;
     if (type === "ARMS_UP") {
         if (x < -0.7 && x > -3.0 && y > 1 && y < 3.5) return true;
         if (x > 0.7 && x < 3.0 && y > 1 && y < 3.5) return true;

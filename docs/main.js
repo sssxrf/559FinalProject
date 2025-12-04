@@ -15,12 +15,13 @@ Object.assign(scoreEl.style, {
 scoreEl.innerText = "SCORE: 0";
 document.body.appendChild(scoreEl);
 
-// --- UI: Mode Switcher ---
+// --- UI: Mode Switcher & Demo Button ---
 const modeContainer = document.createElement('div');
-// CHANGED: Moved from top:10px to bottom:10px to avoid overlapping with Group Name
+// Positioned at bottom-left to avoid overlap
 Object.assign(modeContainer.style, {
     position: 'fixed', bottom: '10px', left: '10px', zIndex: '20',
-    background: 'rgba(0,0,0,0.5)', padding: '5px', borderRadius: '4px'
+    background: 'rgba(0,0,0,0.5)', padding: '5px', borderRadius: '4px',
+    display: 'flex', alignItems: 'center', gap: '10px' // Flexbox for alignment
 });
 document.body.appendChild(modeContainer);
 
@@ -37,6 +38,25 @@ modeSelect.innerHTML = `
 `;
 modeSelect.addEventListener('change', (e) => setGameMode(e.target.value));
 modeContainer.appendChild(modeSelect);
+
+// NEW: Demo Button
+const demoBtn = document.createElement('button');
+demoBtn.innerText = "📺 Watch Demo";
+Object.assign(demoBtn.style, {
+    cursor: 'pointer',
+    background: '#444',
+    color: 'white',
+    border: '1px solid white',
+    borderRadius: '4px',
+    padding: '2px 8px',
+    fontSize: '12px'
+});
+// Opens 'demo.mp4' from the root of your repo in a new tab
+demoBtn.onclick = () => {
+    window.open('./demo.mp4', '_blank');
+};
+modeContainer.appendChild(demoBtn);
+
 
 // --- UI: PIP Label ---
 const pipLabel = document.createElement('div');
@@ -440,6 +460,20 @@ function updateScore() {
 // 6. INPUT HANDLING & LOOP
 // --------------------------------------------------------
 const videoElement = document.getElementsByClassName('input_video')[0];
+
+// Show the webcam feed in top-right corner (below score)
+Object.assign(videoElement.style, {
+    display: 'block',
+    position: 'fixed',
+    top: '50px', 
+    right: '20px',
+    width: '150px',
+    height: 'auto',
+    zIndex: '15', 
+    transform: 'scaleX(-1)', // Mirror view
+    border: '2px solid rgba(255,255,255,0.5)',
+    borderRadius: '8px'
+});
 
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'c' && handLandmarks) {

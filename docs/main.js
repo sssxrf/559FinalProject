@@ -87,16 +87,13 @@ const Assets = {
         wallMat: new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.4 })
     },
     full: {
-        // Updated "Cartoon Robot" Materials
-        robotSkin: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }), // White Glossy
-        robotJoint: new THREE.MeshStandardMaterial({ color: 0x333333 }), // Dark Grey
-        robotEye: new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 0.8 }), // Glowing Cyan
-        
-        // Updated Wall Material: Emissive makes it glow in the dark!
+        robotSkin: new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }),
+        robotJoint: new THREE.MeshStandardMaterial({ color: 0x333333 }), 
+        robotEye: new THREE.MeshStandardMaterial({ color: 0x00ffcc, emissive: 0x00ffcc, emissiveIntensity: 0.8 }), 
         wallMat: new THREE.MeshStandardMaterial({ 
             color: 0xff00ff, 
             roughness: 0.2,
-            emissive: 0x440044, // Glows purple
+            emissive: 0x440044, 
             emissiveIntensity: 0.5
         })
     }
@@ -112,19 +109,17 @@ function getAsset(type, isLeg) {
     } else {
         const a = Assets.full;
         if (type === 'wallMat') return a.wallMat;
-        // Other parts are custom built in updatePuppetSkin
         return null; 
     }
 }
 
 // --------------------------------------------------------
-// 3. BUILD THE MARIONETTE (PROTOTYPE vs CARTOON)
+// 3. BUILD THE MARIONETTE
 // --------------------------------------------------------
 const puppet = new THREE.Group();
 puppet.position.y = -2;
 scene.add(puppet);
 
-// Containers
 const torsoGroup = new THREE.Group(); puppet.add(torsoGroup);
 const headGroup = new THREE.Group(); puppet.add(headGroup);
 const leftArmGroup = new THREE.Group(); puppet.add(leftArmGroup);
@@ -132,24 +127,20 @@ const rightArmGroup = new THREE.Group(); puppet.add(rightArmGroup);
 const leftLegGroup = new THREE.Group(); puppet.add(leftLegGroup);
 const rightLegGroup = new THREE.Group(); puppet.add(rightLegGroup);
 
-// Pivot Points (Shoulders/Hips)
 leftArmGroup.position.set(-0.7, 1.8, 0);
 rightArmGroup.position.set(0.7, 1.8, 0);
 leftLegGroup.position.set(-0.3, 0, 0);
 rightLegGroup.position.set(0.3, 0, 0);
 
-// Global list for collision detection
 let collisionMeshes = []; 
 
 function updatePuppetSkin() {
-    // 1. Clean up
     [torsoGroup, headGroup, leftArmGroup, rightArmGroup, leftLegGroup, rightLegGroup].forEach(g => {
         while(g.children.length > 0) g.remove(g.children[0]);
     });
     collisionMeshes = [];
 
     if (gameMode === "PROTOTYPE") {
-        // --- PROTOTYPE BUILD ---
         const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 16), getAsset('bodyMat'));
         torso.position.y = 1; torsoGroup.add(torso);
 
@@ -164,78 +155,56 @@ function updatePuppetSkin() {
         addLimb(leftLegGroup, true); addLimb(rightLegGroup, true);
     } 
     else {
-        // --- FULL (CARTOON ROBOT) BUILD ---
         const matSkin = Assets.full.robotSkin;
         const matJoint = Assets.full.robotJoint;
         const matEye = Assets.full.robotEye;
 
-        // 1. Robot Head (Oval + Eyes + Antenna)
-        const headGeo = new THREE.CapsuleGeometry(0.5, 0.4, 4, 8); // Slightly oval head
+        const headGeo = new THREE.CapsuleGeometry(0.5, 0.4, 4, 8);
         const headMesh = new THREE.Mesh(headGeo, matSkin);
         headMesh.position.y = 2.4;
         
-        // Eyes
         const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.12), matEye);
         leftEye.position.set(-0.2, 0.1, 0.45);
         const rightEye = new THREE.Mesh(new THREE.SphereGeometry(0.12), matEye);
         rightEye.position.set(0.2, 0.1, 0.45);
         headMesh.add(leftEye); headMesh.add(rightEye);
         
-        // Antenna
         const antStick = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.5), matJoint);
         antStick.position.y = 0.6;
         const antBall = new THREE.Mesh(new THREE.SphereGeometry(0.08), matEye);
         antBall.position.y = 0.25;
         antStick.add(antBall);
         headMesh.add(antStick);
-        
         headGroup.add(headMesh);
 
-        // 2. Robot Torso (Rounded Box)
         const bodyGeo = new THREE.CylinderGeometry(0.5, 0.6, 1.8, 12);
         const bodyMesh = new THREE.Mesh(bodyGeo, matSkin);
         bodyMesh.position.y = 1.0;
-        // Add a "chest plate" details
         const plate = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.2), matJoint);
         plate.position.set(0, 0.2, 0.45);
         bodyMesh.add(plate);
         torsoGroup.add(bodyMesh);
 
-        // 3. Robot Limbs (Jointed look)
         const addRobotLimb = (group) => {
-            // Visuals
             const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.12, 1.5, 8), matSkin);
             upper.position.y = -0.75;
-            
-            // Shoulder Joint (Sphere)
             const joint = new THREE.Mesh(new THREE.SphereGeometry(0.2), matJoint);
-            joint.position.y = 0.75; // Top of the cylinder
-            upper.add(joint);
-
-            // Hand/Foot (Sphere)
+            joint.position.y = 0.75; upper.add(joint);
             const hand = new THREE.Mesh(new THREE.SphereGeometry(0.2), matJoint);
-            hand.position.y = -0.75; // Bottom of the cylinder
-            upper.add(hand);
-
+            hand.position.y = -0.75; upper.add(hand);
             group.add(upper);
 
-            // Hitbox (Invisible - Matches Prototype Geometry exactly)
-            // This ensures collision is identical to Prototype mode
             const hitbox = new THREE.Mesh(Assets.prototype.limbGeo, new THREE.MeshBasicMaterial({ visible: false }));
             hitbox.position.y = -0.75;
             group.add(hitbox);
-            
             collisionMeshes.push(hitbox);
         };
 
-        addRobotLimb(leftArmGroup);
-        addRobotLimb(rightArmGroup);
-        addRobotLimb(leftLegGroup);
-        addRobotLimb(rightLegGroup);
+        addRobotLimb(leftArmGroup); addRobotLimb(rightArmGroup);
+        addRobotLimb(leftLegGroup); addRobotLimb(rightLegGroup);
     }
 }
 
-// Initial Build
 updatePuppetSkin();
 
 function setGameMode(mode) {
@@ -266,9 +235,10 @@ function createString() {
 const strings = { index: createString(), middle: createString(), ring: createString(), pinky: createString() };
 
 // --------------------------------------------------------
-// 5. WALL MANAGER (UPDATED VISIBILITY)
+// 5. WALL MANAGER (DEBRIS & EXPLOSIONS)
 // --------------------------------------------------------
 const walls = []; 
+const debris = []; // Array to store broken wall pieces
 const wallSpeed = 10.0;
 let lastWallTime = 0;
 const wallInterval = 4000;
@@ -307,8 +277,6 @@ function spawnWall() {
     const type = Math.random() > 0.5 ? "ARMS_UP" : "SPLITS";
 
     const boxGeo = new THREE.BoxGeometry(blockSize, blockSize, 1);
-    
-    // FIX: Clone the material so each wall has a unique color instance
     const boxMat = getAsset('wallMat').clone(); 
 
     for(let r = 0; r < rows; r++) {
@@ -329,6 +297,78 @@ function spawnWall() {
     walls.push(wallGroup);
 }
 
+// NEW: Physics-based Explosion System
+function createExplosion(wallGroup, hitBricks) {
+    const explosionRadius = 1.0; 
+    const bricksToBreak = new Set();
+
+    // Identify all bricks to break around ALL hit points
+    hitBricks.forEach(centerBrick => {
+        const centerPos = centerBrick.position.clone();
+        for (let i = 0; i < wallGroup.children.length; i++) {
+            const b = wallGroup.children[i];
+            if (b.position.distanceTo(centerPos) < explosionRadius) {
+                bricksToBreak.add(b);
+            }
+        }
+    });
+
+    // Detach and animate
+    bricksToBreak.forEach(b => {
+        // Get world transform
+        const worldPos = new THREE.Vector3();
+        b.getWorldPosition(worldPos);
+        const worldQuat = new THREE.Quaternion();
+        b.getWorldQuaternion(worldQuat);
+
+        // Remove from wall hierarchy
+        wallGroup.remove(b);
+
+        // Add to scene as standalone debris
+        b.position.copy(worldPos);
+        b.quaternion.copy(worldQuat);
+        // Make it look "hot" or damaged
+        b.material = b.material.clone();
+        b.material.color.setHex(0xffaa00);
+        b.material.emissive.setHex(0xff0000);
+        
+        scene.add(b);
+
+        // Physics properties
+        const velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 5, // Spread X
+            (Math.random() - 0.5) * 5, // Spread Y
+            (Math.random() * 5) + 8    // Forward Z (keep momentum)
+        );
+
+        debris.push({
+            mesh: b,
+            velocity: velocity,
+            rotAxis: new THREE.Vector3(Math.random(), Math.random(), Math.random()).normalize(),
+            rotSpeed: Math.random() * 10
+        });
+    });
+}
+
+function updateDebris(dt) {
+    for (let i = debris.length - 1; i >= 0; i--) {
+        const d = debris[i];
+        // Apply Gravity
+        d.velocity.y -= 15.0 * dt;
+        
+        // Move
+        d.mesh.position.addScaledVector(d.velocity, dt);
+        // Rotate
+        d.mesh.rotateOnAxis(d.rotAxis, d.rotSpeed * dt);
+
+        // Despawn
+        if (d.mesh.position.y < -10) {
+            scene.remove(d.mesh);
+            debris.splice(i, 1);
+        }
+    }
+}
+
 function updateWalls(dt) {
     if(gameState !== "PLAYING") return;
     for (let i = walls.length - 1; i >= 0; i--) {
@@ -336,9 +376,11 @@ function updateWalls(dt) {
         wall.position.z += wallSpeed * dt;
 
         if (wall.userData.active && wall.position.z > -1 && wall.position.z < 1) {
-            if (checkCollision(wall)) {
+            // Check collision and get ALL hit bricks
+            const hitBricks = checkCollision(wall);
+            if (hitBricks.length > 0) {
                 wall.userData.active = false;
-                handleCrash(wall);
+                handleCrash(wall, hitBricks);
                 score -= 1; updateScore();
             }
         }
@@ -355,25 +397,36 @@ function updateWalls(dt) {
 }
 
 function checkCollision(wallGroup) {
-    if (collisionMeshes.length === 0) return false;
+    if (collisionMeshes.length === 0) return []; // Returns empty array
     const limbBoxes = collisionMeshes.map(mesh => new THREE.Box3().setFromObject(mesh));
     const wallZ = wallGroup.position.z;
-    if (Math.abs(wallZ) > 1.0) return false;
+    if (Math.abs(wallZ) > 1.0) return [];
 
+    const hits = [];
     for(let brick of wallGroup.children) {
         const brickWorldZ = wallZ + brick.position.z; 
         if (brickWorldZ < -1 || brickWorldZ > 1) continue;
         const brickBox = new THREE.Box3().setFromObject(brick);
         for(let limbBox of limbBoxes) {
-            if(brickBox.intersectsBox(limbBox)) return true;
+            if(brickBox.intersectsBox(limbBox)) {
+                hits.push(brick);
+                break; // Don't add the same brick twice
+            }
         }
     }
-    return false;
+    return hits;
 }
 
-function handleCrash(wallGroup) {
-    wallGroup.children.forEach(brick => brick.material.color.setHex(0xff0000));
-    statusEl.textContent = "CRASH! -1 Point";
+function handleCrash(wallGroup, hitBricks) {
+    if (gameMode === "FULL" && hitBricks.length > 0) {
+        // Trigger Explosion for all hit bricks
+        createExplosion(wallGroup, hitBricks);
+        statusEl.textContent = "SMASH! -1 Point";
+    } else {
+        // Prototype behavior (Color change)
+        wallGroup.children.forEach(brick => brick.material.color.setHex(0xff0000));
+        statusEl.textContent = "CRASH! -1 Point";
+    }
     setTimeout(() => { if(gameState==="PLAYING") statusEl.textContent = "GAME ON! Dodge the walls!"; }, 1000);
 }
 
@@ -453,7 +506,6 @@ function updateGameLogic() {
 function updateString(lineObj, fingerMesh, limbMesh) {
     if (!limbMesh) return;
     const start = fingerMesh.position;
-    // For Robot, the "hand" ball is at Y=-0.75 relative to the limb mesh
     const end = new THREE.Vector3(0, -0.75, 0); 
     end.applyMatrix4(limbMesh.matrixWorld);
     lineObj.geometry.setFromPoints([start, end]);
@@ -477,7 +529,10 @@ function animate(time) {
             lastWallTime = time;
         }
     }
+    
+    // Update logic
     updateWalls(dt);
+    updateDebris(dt); // Physics update
 
     const width = window.innerWidth;
     const height = window.innerHeight;
